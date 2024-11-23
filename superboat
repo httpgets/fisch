@@ -1,0 +1,7 @@
+local boats = workspace.active.boats[game.Players.LocalPlayer.Name]
+local plrboat = boats:FindFirstChildOfClass("Model")
+while boats:FindFirstChildOfClass("Model") do
+    local base = plrboat.Base.Velocity
+    plrboat:PivotTo(plrboat:GetPivot() + (Vector3.new(base.X, 0, base.Z) * 1.5))
+    task.wait()
+end
