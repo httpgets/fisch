@@ -1,0 +1,2 @@
+game.Players.LocalPlayer.Character:PivotTo(CFrame.new(-- cords))
+-- js change where it says "cords" to ur cframe position
