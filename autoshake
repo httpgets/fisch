@@ -1,0 +1,247 @@
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+local GuiService = game:GetService("GuiService")
+local Connections = {}
+local Injected = true
+
+local function postToWebhookAsync(url: string, title: string, description: string)
+    local data = {
+        content = "",
+        tts = false,
+        embeds = {
+            {
+                title = title,
+                description = description,
+                type = "rich"
+            }
+        }
+    }
+
+    return pcall(function()
+        return request({
+            Url = url,
+            Method = "POST",
+            Body = game:GetService("HttpService"):JSONEncode(data),
+            Headers = {
+                ["Content-Type"] = "application/json"
+            }
+        })
+    end)
+end
+
+if _G.Uninject then
+    _G.Uninject()
+end
+
+_G.Uninject = function()
+    for _, v in ipairs(Connections) do
+        v:Disconnect()
+    end
+    table.clear(Connections)
+    Injected = false
+end
+
+local function pressEnter()
+    keypress(0x0D)
+    task.wait(1 / 125)
+    keyrelease(0x0D)
+end
+
+local function parseContentFromRichText(input)
+    local content = {}
+    local pattern = "<%w+>(.-)</%w+>"
+
+    for text in input:gmatch(pattern) do
+        table.insert(content, text)
+    end
+
+    return content
+end
+
+local function attemptFocus(object)
+    local focused = false
+    local suc, res
+    
+    task.spawn(function()
+        object.SelectionGained:Wait()
+        focused = true
+        print("Focused")
+    end)
+
+    repeat
+        suc, res = pcall(function()
+            return GuiService:Select(object)
+        end)
+        task.wait()
+    until focused == true or suc == false
+end
+
+local function focused(object, func)
+    return object.SelectionGained:Connect(func)
+end
+
+local function charAdded(model)
+    Character = model
+end
+
+local function descendantAdded(parent, callback)
+    return parent.DescendantAdded:Connect(callback)
+end
+
+local function childAdded(parent, callback)
+    return parent.ChildAdded:Connect(callback)
+end
+
+local function properSafeZoneCheck(safeZone)
+    return safeZone:IsA("Frame") and safeZone.Name == "safezone"
+end
+
+local function autoCast()
+    table.insert(Connections, descendantAdded(LocalPlayer.Character:WaitForChild("HumanoidRootPart"), function(v)
+        task.wait(1 / 15)
+        if v.Name == "powerbar" then
+            local bar = v:WaitForChild("bar")
+            table.insert(Connections, bar:GetPropertyChangedSignal("Size"):Connect(function()
+                if bar.Size.Y.Scale > 0.85 then
+                    mouse1release()
+                end
+            end))
+        end
+    end))
+end
+
+local function charAdded(model)
+    Character = model
+    autoCast()
+end
+
+autoCast()
+
+local function safeZoneAdded(safeZone)
+    task.defer(function()
+        if properSafeZoneCheck(safeZone) then
+            local button = safeZone:FindFirstChild("button")
+            if button and button:IsA("GuiObject") then
+                table.insert(Connections, focused(button, function()
+                    for i = 1, 25 do
+                        task.spawn(pressEnter)
+                        if math.random(1, 9) == math.random(1, 9) then task.wait() end
+                    end
+                end))
+
+                table.insert(Connections, focused(safeZone, function()
+                    for i = 1, 25 do
+                        task.spawn(pressEnter)
+                        if math.random(1, 9) == math.random(1, 9) then task.wait() end
+                    end
+                end))
+
+                table.insert(Connections, childAdded(safeZone, function(v)
+                    local function check()
+                        if (v.Name == "button") and v:IsA("ImageButton") then
+                            task.spawn(function()
+                                attemptFocus(safeZone)
+                            end)
+
+                            task.wait(1 / 100)
+                            
+                            for _ = 1, 152 do
+                                task.spawn(pressEnter)
+                                if math.random(1,9) == math.random(1,9) then task.wait() end
+                            end
+                        end
+                    end
+
+                    table.insert(Connections, v:GetPropertyChangedSignal("Name"):Connect(check))
+                    check()
+                end))
+
+                attemptFocus(safeZone)
+            end
+        end
+    end)
+end
+
+local function stripTags(input)
+    local tags = {}
+    local pattern = "<(%w+)%s*([^>]*)>"
+
+    for tag, attributes in input:gmatch(pattern) do
+        table.insert(tags, { tag = tag, attributes = attributes })
+    end
+
+    return tags
+end
+
+function autoPlayReelMinigame()
+    local reel = PlayerGui:FindFirstChild("reel")
+    if not reel then return nil end
+    local bar = reel:FindFirstChild("bar")
+    if not bar then return nil end
+    local fish = bar:FindFirstChild("fish")
+    local plrbar = bar:FindFirstChild("playerbar")
+    if not fish or not plrbar then return nil end
+    local relativeX = math.clamp(fish.Position.X.Scale, 0, 1)
+    
+    plrbar:GetPropertyChangedSignal("Position"):Connect(function()
+        local current = plrbar.Position.X.Scale
+        if current ~= relativeX then
+            plrbar.Position = UDim2.new(relativeX, 0, plrbar.Position.Y.Scale, 0)
+        end
+    end)
+    fish:GetPropertyChangedSignal("Position"):Connect(function()
+        relativeX = math.clamp(fish.Position.X.Scale, 0, 1)
+    end)
+
+    while PlayerGui:FindFirstChild("reel") do
+        plrbar.Position = UDim2.new(relativeX, 0, plrbar.Position.Y.Scale, 0)
+        task.wait()
+    end
+
+    doing = false
+end
+
+table.insert(Connections, descendantAdded(PlayerGui, function(object)
+    if object:IsA("Frame") then
+        return safeZoneAdded(object)
+    elseif object:IsA("TextLabel") then
+        task.wait(1 / 10)
+        if object.Text:lower():find("you") and object.Text:lower():find("caught") then
+            local tags = stripTags(object.Text)
+            local colour = tags[3].attributes
+            local rarity = "Unknown"
+            if colour == "color='#A1FFA9'" then
+                rarity = "Common"
+            elseif
+                colour == "color='8EBBBF'" or
+                colour == "color='#C087C6'" or
+                colour == "color='#8EBBBF'"
+            then
+                rarity = "Uncommon"
+            elseif colour == "color='#776CB5'" then
+                rarity = "Medium-Rare"
+            elseif colour == "color='#FF3E78'" then
+                rarity = "Mythical"
+            end
+            print(rarity, colour)
+            for _,v in next, parseContentFromRichText(object.Text) do
+                if typeof(v) == "string" and #v > 1.5 then
+                    postToWebhookAsync(
+                        "https://discord.com/api/webhooks/1307431396117188668/LKssbLLWs70UdXGaFfNA4G6d1JkauNb1tzFiGABHVP03O2uyBl8A404unAoYjnlzSkyI",
+                        "A new item has been caught!",
+                        "**Your account**: ``" .. LocalPlayer.DisplayName .. "``\n**Item caught**: ``" .. v .. "``\n**Kilograms**: ``" .. tostring(parseContentFromRichText(object.Text)[3]) .. "kg``\n" .. "**Rarity**: ``" .. rarity .. "``"
+                    )
+                    break
+                end
+            end
+        end
+    end
+end))
+
+table.insert(Connections, LocalPlayer.CharacterAdded:Connect(charAdded))
+
+while Injected do
+    autoPlayReelMinigame()
+    task.wait()
+end
