@@ -1,0 +1,17 @@
+local world = workspace.world
+local inter = world.interactables
+
+local lplr = game:GetService("Players").LocalPlayer
+function autobuy(name: string)
+local item = inter:FindFirstChild(name)
+assert(item)
+local handle = item.handle
+local prompt = item.purchaserompt
+lplr.Character:PivotTo(handle:GetPivot())
+for i = 1,100 do
+fireproximityprompt(prompt)
+task.wait()
+end
+end
+autobuy("Training Rod")
+-- change "Training Rod" with the rod name 
