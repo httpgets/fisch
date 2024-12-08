@@ -1,0 +1,6 @@
+local args = {
+    [1] = "showflags",
+    [2] = true
+}
+
+game:GetService("Players").LocalPlayer:WaitForChild("ChangeSetting"):FireServer(unpack(args))
