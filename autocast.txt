@@ -1,0 +1,6 @@
+local args = {
+    [1] = 82.40000000000002,
+    [2] = 1
+}
+
+game:GetService("Players").LocalPlayer.Character:FindFirstChild("Training Rod").events.cast:FireServer(unpack(args))
