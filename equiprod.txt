@@ -1,0 +1,5 @@
+local args = {
+    [1] = "Training Rod"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("events"):WaitForChild("equiprod"):FireServer(unpack(args))
