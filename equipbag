@@ -1,0 +1,5 @@
+local args = {
+    [1] = game:GetService("Players").LocalPlayer:WaitForChild("Equipment Bag")
+}
+
+game:GetService("Players").LocalPlayer:WaitForChild("equip"):FireServer(unpack(args))
