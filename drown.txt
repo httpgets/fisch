@@ -1,0 +1,5 @@
+local args = {
+    [1] = 0
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("events"):WaitForChild("drown"):FireServer(unpack(args))
