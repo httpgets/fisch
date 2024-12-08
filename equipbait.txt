@@ -1,0 +1,5 @@
+local args = {
+    [1] = "Worm"
+}
+
+game:GetService("Players").LocalPlayer:WaitForChild("e"):FireServer(unpack(args))
