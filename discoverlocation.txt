@@ -1,0 +1,5 @@
+local args = {
+    [1] = "Moosewood"
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("events"):WaitForChild("discoverlocation"):FireServer(unpack(args))
