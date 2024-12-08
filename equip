@@ -1,0 +1,5 @@
+local args = {
+    [1] = game:GetService("Players").LocalPlayer.Character:FindFirstChild("Flimsy Rod")
+}
+
+game:GetService("Players").LocalPlayer:WaitForChild("equip"):FireServer(unpack(args))
