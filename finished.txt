@@ -1,0 +1,6 @@
+local args = {
+    [1] = 0.040921949733496166,
+    [2] = false
+}
+
+game:GetService("ReplicatedStorage"):WaitForChild("events"):WaitForChild("reelfinished"):FireServer(unpack(args))
